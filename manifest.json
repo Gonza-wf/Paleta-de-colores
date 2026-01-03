@@ -1,7 +1,7 @@
 {
   "name": "Laboratorio de Color",
   "short_name": "ColorLab",
-  "start_url": "colores.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4A90E2",
@@ -12,4 +12,5 @@
       "type": "image/png"
     }
   ]
+
 }
