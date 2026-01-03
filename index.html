@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio de Paletas Cromáticas</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de tinycolor2 para cálculos de color -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.6.0/tinycolor.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script>
+    // Registrar el Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
+    </script>
+    
+    <style>
+        /* Estilos personalizados para efectos visuales */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .color-circle, .shade-box {
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .text-shadow-sm {
+            /* Sombra sutil para mejorar el contraste del texto sobre colores oscuros */
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); 
+        }
+        /* Oculta la apariencia del input[type="color"] en algunos navegadores para control de estilo */
+        input[type="color"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: none;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 0.75rem; /* rounded-xl */
+        }
+        /* Clase para prevenir el scroll del fondo cuando el modal está activo */
+        .overflow-hidden {
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 bg-gray-50">
+
+    <!-- Título Principal -->
+    <header class="text-center mb-10">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 border-b-4 border-blue-500 inline-block pb-3">
+            🎨 Laboratorio de Paletas Cromáticas
+        </h1>
+        <p class="mt-3 text-gray-600 text-xl">
+            Generación automática de armonías de color y escalas de tonalidades con `tinycolor2`.
+        </p>
+    </header>
+
+    <!-- Input de Color y Controles -->
+    <div class="max-w-xl mx-auto mb-12 p-8 bg-white rounded-2xl shadow-2xl flex flex-col items-center border-t-8 border-indigo-600">
+        <label for="color-picker" class="text-xl font-medium text-gray-700 mb-4">
+            1. Selecciona el Color Base
+        </label>
+        <div class="flex w-full space-x-4">
+            <input
+                id="color-picker"
+                type="color"
+                value="#4A90E2"
+                onchange="handleColorChange(event.target.value)"
+                class="w-1/3 h-16 cursor-pointer rounded-xl border-2 border-gray-300 p-0.5"
+                title="Selector visual de Color Base"
+            />
+            <input
+                id="color-text-input"
+                type="text"
+                value="#4A90E2"
+                oninput="handleColorChange(event.target.value)"
+                placeholder="#RRGGBB"
+                class="w-2/3 text-center text-2xl font-mono p-3 border-2 border-indigo-400 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-inner"
+                aria-invalid="false"
+            />
+        </div>
+    </div>
+
+    <!-- Sección de Color Base (Contenido dinámico: Muestra, HEX, RGB, HSL) -->
+    <div id="base-color-section">
+        <!-- El contenido del color base se insertará aquí por JS -->
+    </div>
+
+    <!-- Sección NUEVA: Escala de Tonalidades (Shade Scale) -->
+    <section class="max-w-6xl mx-auto mb-12 p-6 bg-white rounded-2xl shadow-2xl border-t-8 border-cyan-500">
+        <h2 class="text-3xl font-extrabold text-gray-800 mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-cyan-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+            </svg>
+            Escala de Tonalidades (Shades & Tints)
+        </h2>
+        <p class="text-gray-600 mb-6">
+            Generación de una escala de 10 pasos (50 al 900), esencial para definir gradientes de color y estados. Haz click para copiar el valor HEX.
+        </p>
+        <div id="shade-scale-container" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2">
+            <!-- La escala de 10 tonalidades se insertará aquí por JS -->
+        </div>
+    </section>
+    <!-- FIN Escala de Tonalidades -->
+
+    <!-- Contenedor de Armonías -->
+    <main id="harmonies-container" class="grid lg:grid-cols-3 md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-12">
+        <!-- Las 6 armonías se insertarán aquí por JS -->
+    </main>
+    
+    <!-- Sección de Previsualización de UI (Mockup) con Carrusel -->
+    <section class="max-w-6xl mx-auto mb-12 p-6 bg-white rounded-2xl shadow-2xl border-t-8 border-yellow-500">
+        <h2 class="text-3xl font-extrabold text-gray-800 mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM3 10a7 7 0 1114 0 7 7 0 01-14 0zM7 9a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+            Previsualización en UI (Web)
+        </h2>
+        <p class="text-gray-600 mb-6">
+            Visualiza cómo la paleta seleccionada funciona en diferentes elementos de interfaz de usuario.
+        </p>
+        <div id="ui-preview-content">
+            <!-- El carrusel con la navegación y el mockup se insertará aquí por JS -->
+        </div>
+    </section>
+    <!-- FIN de Previsualización de UI -->
+
+    <!-- Mensaje de Error (Inicialmente oculto) -->
+    <div id="error-message" class="hidden mt-8 max-w-xl mx-auto p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg" role="alert">
+        <p class="font-bold">¡Error de Formato!</p>
+        <p>El valor ingresado no es un código de color HEX válido. Por favor, corrígelo.</p>
+    </div>
+
+    <!-- Notificación de Copia -->
+    <div id="copy-notification" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-gray-900 text-white rounded-lg shadow-xl opacity-0 transition-opacity duration-300 z-50 hidden"></div>
+
+    <!-- Modal de Información -->
+    <div id="info-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-40 hidden" onclick="hideInfoModal()">
+        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 max-w-lg w-full transform transition-all" onclick="event.stopPropagation()">
+            <!-- Cabecera del modal -->
+            <div class="flex justify-between items-start">
+                <h3 id="modal-title" class="text-2xl font-extrabold mb-4">Título</h3>
+                <button onclick="hideInfoModal()" class="text-gray-400 hover:text-gray-600 transition duration-150 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Contenido del modal -->
+            <p id="modal-text" class="text-gray-700 leading-relaxed"></p>
+            
+            <div class="mt-6 pt-4 border-t text-right">
+                   <button onclick="hideInfoModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-150 font-semibold shadow-md">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- FIN Modal de Información -->
+
+    <script>
+        // Variables globales para el estado y DOM
+        const DEFAULT_COLOR = '#4A90E2';
+        let currentBaseColor = DEFAULT_COLOR;
+        let isValid = true;
+        
+        let currentShadeScale = {}; 
+        let currentPreviewIndex = 0; // NUEVO: Rastrea el índice actual del mockup de UI
+
+        const colorPicker = document.getElementById('color-picker');
+        const colorTextInput = document.getElementById('color-text-input');
+        const baseColorSection = document.getElementById('base-color-section');
+        const harmoniesContainer = document.getElementById('harmonies-container');
+        const shadeScaleContainer = document.getElementById('shade-scale-container');
+        const errorMessage = document.getElementById('error-message');
+        
+        // --- Explicaciones de Armonías --- (Mantenidas)
+        const harmonyExplanations = {
+            Monocromática: {
+                title: "Armonía Monocromática",
+                text: "Utiliza un solo color base, variando su saturación y luminosidad (tinte y sombra). Crea paletas muy cohesivas, sutiles y elegantes, siendo la más segura para el diseño, ya que garantiza la uniformidad. Es ideal para fondos, estructuras y diseños minimalistas.",
+                color: "text-indigo-700"
+            },
+            Complementaria: {
+                title: "Armonía Complementaria",
+                text: "Se basa en dos colores opuestos directamente en el círculo cromático. Ofrece el máximo contraste y una alta vibración visual. Debe usarse con cautela, a menudo usando un color como dominante y el otro (el complementario) como acento para llamar la atención.",
+                color: "text-purple-700"
+            },
+            Triádica: {
+                title: "Armonía Triádica",
+                text: "Emplea tres colores equidistantes en el círculo cromático (separados 120 grados). Es una de las armonías más populares por ser vibrante y equilibrada. Proporciona contraste sin ser tan agresiva como la complementaria, siendo excelente para diseños alegres y energéticos.",
+                color: "text-green-700"
+            },
+            Análoga: {
+                title: "Armonía Análoga",
+                text: "Usa tres o más colores que están uno al lado del otro en el círculo cromático. Son muy armoniosos y se encuentran frecuentemente en la naturaleza. Crean una sensación de tranquilidad y confort. Se recomienda usar un color dominante, un segundo de apoyo y un tercero como acento.",
+                color: "text-orange-700"
+            },
+            Tétrada: {
+                title: "Armonía Tétrada (Doble Complementaria)",
+                text: "Utiliza dos pares de colores complementarios, formando un rectángulo en el círculo cromático (cuatro colores). Es la paleta más rica, pero la más difícil de equilibrar. Se debe seleccionar un color como dominante principal y usar los otros tres para acentos y detalles.",
+                color: "text-red-700"
+            },
+            'Split Complementaria': {
+                title: "Armonía Split Complementaria",
+                text: "Usa el color base y los dos colores adyacentes al color complementario. Ofrece un alto contraste visual (como la complementaria) pero con una tensión menos dramática y más fácil de manejar. Es ideal cuando se busca contraste pero se necesita un mayor grado de sutileza.",
+                color: "text-teal-700"
+            }
+        };
+
+        // --- Definición de Plantillas de UI para el Carrusel ---
+        const uiPreviewTemplates = [
+            // Template 1: Navbar and Buttons (Original)
+            {
+                name: "Mockup 1: Barra de Navegación y Botones",
+                html: (primaryColor, primaryHoverColor, accentColorRaw, accentHoverColor, darkTextColor, lightAccentColor, primaryContrastText, accentContrastTextColor, currentShadeScale) => {
+                    return `
+                        <div class="bg-white rounded-xl shadow-2xl overflow-hidden mb-4 border border-gray-200">
+                            <!-- Header / Barra de Navegación -->
+                            <div style="background-color: ${primaryColor};" class="p-4 flex justify-between items-center shadow-lg">
+                                <span class="text-xl font-bold ${primaryContrastText}">
+                                    Mi Diseño Base
+                                </span>
+                                <nav class="hidden sm:flex space-x-4">
+                                    <a href="javascript:void(0)" class="text-sm font-medium ${primaryContrastText} opacity-80 hover:opacity-100 transition">Inicio</a>
+                                    <a href="javascript:void(0)" class="text-sm font-medium ${primaryContrastText} opacity-80 hover:opacity-100 transition">Servicios</a>
+                                    <a href="javascript:void(0)" class="text-sm font-medium ${primaryContrastText} opacity-80 hover:opacity-100 transition">Contacto</a>
+                                </nav>
+                            </div>
+
+                            <!-- Contenido de la Tarjeta -->
+                            <div class="p-6 md:p-8">
+                                <h3 class="text-2xl font-bold mb-3" style="color: ${darkTextColor};">
+                                    Jerarquía de Títulos y Color de Marca
+                                </h3>
+                                <p class="text-gray-600 mb-4">
+                                    Este es un párrafo de ejemplo. El Color Base (${primaryColor}) define el tono de la marca, mientras que el Color Acento (${accentColorRaw}) se reserva para las llamadas a la acción.
+                                </p>
+                                
+                                <div class="space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row mt-6">
+                                    <!-- Botón Primario (Acento: Complementario) -->
+                                    <button 
+                                        type="button"
+                                        class="py-3 px-6 rounded-lg font-semibold shadow-xl transition duration-300 transform hover:scale-[1.02] w-full sm:w-auto focus:ring-4 focus:ring-opacity-50 group"
+                                        style="background-color: ${accentColorRaw}; color: ${accentContrastTextColor}; border: 1px solid ${darkTextColor}; focus-ring-color: ${accentColorRaw};"
+                                        title="Botón de Acción Principal (Complementario)"
+                                        onmouseover="this.style.backgroundColor='${accentHoverColor}'"
+                                        onmouseout="this.style.backgroundColor='${accentColorRaw}'"
+                                    >
+                                        ¡Acción Principal!
+                                    </button>
+                                    
+                                    <!-- Botón Secundario (Outline del Primario) -->
+                                    <button 
+                                        type="button"
+                                        class="py-3 px-6 rounded-lg font-semibold shadow-inner border-2 transition duration-300 w-full sm:w-auto hover:bg-gray-50"
+                                        style="border-color: ${primaryColor}; color: ${primaryColor}; background-color: white;"
+                                        onmouseover="this.style.backgroundColor='${currentShadeScale[100] || '#f0f0f0'}'"
+                                        onmouseout="this.style.backgroundColor='white'"
+                                    >
+                                        Acción Secundaria
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Footer (Base color más claro) -->
+                            <div style="background-color: ${lightAccentColor};" class="p-4 text-center">
+                                <p class="text-sm" style="color: ${darkTextColor};">
+                                    2024 Laboratorio de Color | Previsualización de UI
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+            // Template 2: Simple Pricing Card
+            {
+                name: "Mockup 2: Tarjeta de Precios",
+                html: (primaryColor, primaryHoverColor, accentColorRaw, accentHoverColor, darkTextColor, lightAccentColor, primaryContrastText, accentContrastTextColor, currentShadeScale) => {
+                    const primaryLightest = currentShadeScale[50] || '#f8fafc';
+                    const accentText = tinycolor(accentColorRaw).isLight() ? darkTextColor : '#ffffff';
+                    
+                    return `
+                        <div class="max-w-sm mx-auto rounded-xl shadow-2xl overflow-hidden border-4 border-dashed" style="border-color: ${currentShadeScale[200]};">
+                            <!-- Cabecera de Precios -->
+                            <div class="p-6 text-center" style="background-color: ${primaryLightest};">
+                                <h4 class="text-xl font-semibold mb-2" style="color: ${darkTextColor};">Plan Profesional</h4>
+                                <p class="text-gray-500 mb-6">Máximo rendimiento y soporte</p>
+                                <div class="text-4xl font-extrabold mb-8" style="color: ${primaryColor};">
+                                    $29<span class="text-xl font-normal text-gray-500">/mes</span>
+                                </div>
+                                <ul class="text-sm space-y-3 text-gray-700 text-left w-max mx-auto mb-8">
+                                    <li class="flex items-center"><svg class="w-5 h-5 mr-2" style="color: ${primaryColor};" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Proyectos Ilimitados</li>
+                                    <li class="flex items-center"><svg class="w-5 h-5 mr-2" style="color: ${primaryColor};" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Soporte 24/7 Premium</li>
+                                    <li class="flex items-center"><svg class="w-5 h-5 mr-2" style="color: ${primaryColor};" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> 5GB de Almacenamiento</li>
+                                </ul>
+                                
+                                <button 
+                                    class="w-full py-3 rounded-lg font-bold shadow-md transition duration-300 transform hover:scale-[1.01] focus:ring-4 mt-4"
+                                    style="background-color: ${accentColorRaw}; color: ${accentContrastTextColor}; focus-ring-color: ${accentColorRaw};"
+                                    onmouseover="this.style.backgroundColor='${accentHoverColor}'"
+                                    onmouseout="this.style.backgroundColor='${accentColorRaw}'"
+                                >
+                                    ¡Suscribirse!
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+            // Template 3: Notification Block
+            {
+                name: "Mockup 3: Bloque de Alerta y Notificación",
+                html: (primaryColor, primaryHoverColor, accentColorRaw, accentHoverColor, darkTextColor, lightAccentColor, primaryContrastText, accentContrastTextColor, currentShadeScale) => {
+                     const backgroundColor = currentShadeScale[50] || '#f9fafb';
+                     const borderColor = currentShadeScale[400] || primaryColor;
+                     const primaryIconColor = currentShadeScale[500] || primaryColor;
+                     const accentButtonHover = tinycolor(accentColorRaw).darken(5).toHexString();
+    
+                     return `
+                        <div class="max-w-xl mx-auto p-6 rounded-xl shadow-xl border-l-8" style="border-color: ${borderColor}; background-color: ${backgroundColor};">
+                            <div class="flex items-start">
+                                <!-- Icono (usando el color primario) -->
+                                <div class="flex-shrink-0 pt-1">
+                                    <svg class="w-6 h-6" style="color: ${primaryIconColor};" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                
+                                <!-- Contenido del texto -->
+                                <div class="ml-4 flex-grow">
+                                    <h4 class="text-lg font-semibold mb-1" style="color: ${darkTextColor};">
+                                        Actualización Importante de la Cuenta
+                                    </h4>
+                                    <p class="text-sm text-gray-700">
+                                        Hemos actualizado nuestros términos de servicio. Por favor, revisa la documentación completa para entender los cambios aplicados a tu perfil de color.
+                                    </p>
+                                </div>
+    
+                                <!-- Botón de Cierre (usando el color de acento) -->
+                                <div class="ml-4 flex-shrink-0">
+                                    <button 
+                                        class="text-sm font-medium transition duration-150 rounded px-2 py-0.5" 
+                                        style="color: ${accentColorRaw}; hover:color: ${accentButtonHover};"
+                                        title="Botón de Acción Secundario"
+                                        onmouseover="this.style.backgroundColor='${currentShadeScale[100] || '#f0f0f0'}'"
+                                        onmouseout="this.style.backgroundColor='transparent'"
+                                    >
+                                        Descartar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                     `;
+                }
+            }
+        ];
+
+        // --- Funciones de Modal y Utilidades (Mantenidas) ---
+        function showInfoModal(harmonyName) {
+            const info = harmonyExplanations[harmonyName];
+            if (!info) return;
+
+            const modal = document.getElementById('info-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalText = document.getElementById('modal-text');
+            
+            modalTitle.textContent = info.title;
+            modalTitle.className = `text-2xl font-extrabold mb-4 ${info.color}`; 
+            modalText.textContent = info.text;
+
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden'); 
+        }
+
+        function hideInfoModal() {
+            document.getElementById('info-modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function showNotification(message) {
+            let notification = document.getElementById('copy-notification');
+            notification.textContent = message;
+            notification.classList.remove('opacity-0', 'hidden');
+            notification.classList.add('opacity-100', 'block'); 
+
+            clearTimeout(notification.timer);
+            notification.timer = setTimeout(() => {
+                notification.classList.remove('opacity-100');
+                notification.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        function copyToClipboard(text) {
+            const cleanText = text.trim().replace(/\s/g, ''); 
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = cleanText;
+            textarea.style.position = 'fixed'; 
+            textarea.style.opacity = 0;
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showNotification(`¡Valor '${cleanText}' copiado!`);
+                } else {
+                    showNotification('Error al copiar el código (execCommand fallback).');
+                }
+            } catch (err) {
+                console.error('Error al copiar al portapapeles:', err);
+                showNotification('Error al copiar el código.');
+            }
+            document.body.removeChild(textarea);
+        }
+        
+        // Exponer las funciones al scope global
+        window.showInfoModal = showInfoModal;
+        window.hideInfoModal = hideInfoModal;
+        window.copyToClipboard = copyToClipboard;
+        
+        // --- Componente Swatch (Mantenido) ---
+        function createSwatch(hexColor, label, isBase = false) {
+            const tc = tinycolor(hexColor);
+            const textColor = tc.isLight() ? 'text-gray-900' : 'text-white';
+            const borderColor = isBase ? 'border-4 border-blue-500 ring-4 ring-blue-200' : 'border-2 border-gray-200';
+            
+            const swatchDiv = document.createElement('div');
+            swatchDiv.className = "flex flex-col items-center p-1.5 transition duration-300 transform hover:scale-110";
+
+            const colorDiv = document.createElement('div');
+            colorDiv.style.backgroundColor = hexColor;
+            colorDiv.className = `w-16 h-16 rounded-full shadow-lg ${borderColor} flex items-center justify-center color-circle`;
+            colorDiv.setAttribute('aria-label', `Muestra de color ${hexColor}. Haz click para copiar.`);
+            colorDiv.onclick = () => copyToClipboard(hexColor); 
+
+            const baseSpan = document.createElement('span');
+            baseSpan.className = `text-xs font-bold ${textColor} text-shadow-sm`;
+            baseSpan.textContent = isBase ? 'BASE' : '';
+            colorDiv.appendChild(baseSpan);
+            
+            const hexSpan = document.createElement('span');
+            hexSpan.className = `mt-2 font-mono text-sm font-semibold text-center ${isBase ? 'text-blue-600' : 'text-gray-700'}`;
+            hexSpan.textContent = hexColor.toUpperCase();
+
+            swatchDiv.appendChild(colorDiv);
+            swatchDiv.appendChild(hexSpan);
+
+            if (label) {
+                const labelSpan = document.createElement('span');
+                labelSpan.className = "text-xs text-gray-500 mt-0.5";
+                labelSpan.textContent = label;
+                swatchDiv.appendChild(labelSpan);
+            }
+
+            return swatchDiv;
+        }
+
+        // --- Funciones de Renderizado Principal (Modificadas) ---
+
+        /**
+         * Renderiza la sección del color base, incluyendo múltiples formatos de salida.
+         */
+        function renderBaseColorSection() {
+            // ... (Función sin cambios, depende de isValid y currentBaseColor) ...
+            baseColorSection.innerHTML = '';
+            
+            const container = document.createElement('div');
+            container.className = "mb-8 p-4 bg-white rounded-xl shadow-xl border-l-4 border-blue-500 max-w-4xl mx-auto";
+            
+            const title = document.createElement('h2');
+            title.className = "text-xl font-extrabold text-gray-800 mb-4 border-b pb-2";
+            title.textContent = "Color Base Actual (Copiar al hacer click)";
+            container.appendChild(title);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = "flex flex-col items-center";
+            
+            if (isValid) {
+                errorMessage.classList.add('hidden');
+                
+                // Muestra de color principal
+                const swatchContainer = document.createElement('div');
+                swatchContainer.className = "flex justify-center mb-6";
+                swatchContainer.appendChild(createSwatch(currentBaseColor, "HEX Base", true));
+                contentDiv.appendChild(swatchContainer);
+                
+                // Muestra otros formatos (RGB, HSL)
+                const tc = tinycolor(currentBaseColor);
+                const formatsDiv = document.createElement('div');
+                formatsDiv.className = "flex flex-wrap justify-center gap-4 text-sm font-mono";
+                
+                const createFormatSpan = (format, value) => {
+                    const span = document.createElement('span');
+                    span.className = "bg-gray-100 p-2 rounded-lg shadow-inner cursor-pointer hover:bg-gray-200 transition duration-150";
+                    span.textContent = `${format}: ${value.toUpperCase()}`;
+                    span.onclick = () => copyToClipboard(value);
+                    return span;
+                };
+
+                formatsDiv.appendChild(createFormatSpan("HEX", currentBaseColor.toUpperCase()));
+                formatsDiv.appendChild(createFormatSpan("RGB", tc.toRgbString()));
+                formatsDiv.appendChild(createFormatSpan("HSL", tc.toHslString()));
+                
+                contentDiv.appendChild(formatsDiv);
+
+            } else {
+                errorMessage.classList.remove('hidden');
+            }
+            
+            container.appendChild(contentDiv);
+            baseColorSection.appendChild(container);
+        }
+
+        /**
+         * Genera y renderiza la escala de tonalidades de 10 pasos con una lógica HSL mejorada.
+         */
+        function renderShadeScale(baseColor) {
+            shadeScaleContainer.innerHTML = '';
+            currentShadeScale = {};
+
+            const tcBase = baseColor.toHsl();
+            const H = tcBase.h;
+            const S = tcBase.s;
+            
+            const lightnessSteps = {
+                50: 95, 100: 90, 200: 80, 300: 70, 400: 55, 
+                500: Math.round(tcBase.l * 100), 
+                600: 40, 700: 30, 800: 20, 900: 10 
+            };
+            
+            const shadeSteps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+            const scaleColors = [];
+
+            const baseLuminosity = lightnessSteps[500];
+
+            shadeSteps.forEach(step => {
+                let L = lightnessSteps[step];
+                let color;
+                let adjustmentType = "";
+
+                if (step === 500) {
+                    color = baseColor.clone();
+                    adjustmentType = "Base";
+                } else {
+                    color = tinycolor({ h: H, s: S, l: L / 100 });
+                    adjustmentType = step < 500 ? `Lighten to L=${L}%` : `Darken to L=${L}%`;
+                }
+
+                const hex = color.toHexString();
+                scaleColors.push({ step, hex, L, adjustmentType });
+                currentShadeScale[step] = hex; 
+            });
+
+
+            scaleColors.forEach(({ step, hex, L, adjustmentType }) => {
+                const tc = tinycolor(hex);
+                const textColor = tc.isLight() ? 'text-gray-900' : 'text-white';
+                
+                const shadeDiv = document.createElement('div');
+                shadeDiv.className = "flex flex-col items-center text-center transition duration-200 transform hover:scale-105 shade-box rounded-lg p-1 shadow-md";
+                shadeDiv.style.backgroundColor = hex;
+                shadeDiv.title = `Nivel ${step}: ${hex.toUpperCase()} | HSL(H:${Math.round(H)}°, S:${Math.round(S*100)}%, L:${L}%) | Click para copiar.`;
+                shadeDiv.onclick = () => copyToClipboard(hex);
+
+                const hexSpan = document.createElement('span');
+                hexSpan.className = `font-mono text-xs font-semibold mt-1 ${textColor} text-shadow-sm leading-tight`;
+                hexSpan.textContent = hex.toUpperCase();
+                
+                const stepSpan = document.createElement('span');
+                stepSpan.className = `font-bold text-lg ${textColor} text-shadow-sm leading-none`;
+                stepSpan.textContent = step;
+
+                shadeDiv.appendChild(stepSpan);
+                shadeDiv.appendChild(hexSpan);
+                shadeScaleContainer.appendChild(shadeDiv);
+            });
+        }
+
+
+        /**
+         * Renderiza la previsualización de UI (el carrusel y el mockup actual).
+         * Se llama al cambiar el color o al navegar en el carrusel.
+         */
+        function updatePreviewOnly() {
+            const container = document.getElementById('ui-preview-content');
+            
+            // Si el color no es válido o no hay color base, no renderizar
+            if (!isValid || !currentBaseColor || !tinycolor(currentBaseColor).isValid()) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const baseColor = tinycolor(currentBaseColor);
+            
+            // 1. Calcular colores clave
+            const primaryColor = currentShadeScale[500] || baseColor.toHexString();
+            const primaryHoverColor = currentShadeScale[600] || baseColor.clone().darken(10).toHexString(); 
+            const accentColorRaw = baseColor.complement().toHexString();
+            const accentHoverColor = tinycolor(accentColorRaw).darken(10).toHexString(); 
+            const darkTextColor = baseColor.clone().darken(30).toHexString(); 
+            const lightAccentColor = currentShadeScale[100] || baseColor.clone().lighten(30).toHexString(); 
+
+            // Determinar textos de contraste
+            const isPrimaryLight = tinycolor(primaryColor).isLight();
+            const primaryContrastText = isPrimaryLight ? 'text-gray-900' : 'text-white';
+            const accentContrastTextColor = tinycolor(accentColorRaw).isLight() ? '#1f2937' : '#ffffff';
+
+            // 2. Obtener plantilla actual
+            const currentTemplate = uiPreviewTemplates[currentPreviewIndex];
+            const totalTemplates = uiPreviewTemplates.length;
+            
+            // Generar el HTML de la plantilla
+            const templateHtml = currentTemplate.html(
+                primaryColor, 
+                primaryHoverColor, 
+                accentColorRaw, 
+                accentHoverColor, 
+                darkTextColor, 
+                lightAccentColor, 
+                primaryContrastText, 
+                accentContrastTextColor,
+                currentShadeScale
+            );
+
+            // 3. Generar navegación y título del carrusel
+            const navigationHtml = `
+                <div class="flex justify-between items-center mb-6 px-2">
+                    <button 
+                        onclick="prevPreview()" 
+                        class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                        aria-label="Anterior previsualización"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <div class="text-center">
+                        <p class="text-lg font-semibold text-gray-800">${currentTemplate.name}</p>
+                        <p class="text-sm font-mono text-gray-500 mt-1">
+                            ${currentPreviewIndex + 1} / ${totalTemplates}
+                        </p>
+                    </div>
+                    <button 
+                        onclick="nextPreview()" 
+                        class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                        aria-label="Siguiente previsualización"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+            `;
+
+            // 4. Inyectar en el contenedor
+            container.innerHTML = navigationHtml + templateHtml;
+        }
+
+        /**
+         * Wrapper para la función que genera la UI Preview. Reinicia el índice.
+         */
+        function renderUiPreview(baseColor) {
+            // Reiniciar el índice al cambiar el color base
+            currentPreviewIndex = 0;
+            updatePreviewOnly();
+        }
+        
+        // --- Funciones de Navegación del Carrusel (Expuestas globalmente) ---
+        
+        function nextPreview() {
+            if (uiPreviewTemplates.length === 0) return;
+            currentPreviewIndex = (currentPreviewIndex + 1) % uiPreviewTemplates.length;
+            updatePreviewOnly();
+        }
+
+        function prevPreview() {
+            if (uiPreviewTemplates.length === 0) return;
+            // Usamos + length para manejar el módulo de forma correcta para índices negativos
+            currentPreviewIndex = (currentPreviewIndex - 1 + uiPreviewTemplates.length) % uiPreviewTemplates.length;
+            updatePreviewOnly();
+        }
+        
+        window.nextPreview = nextPreview;
+        window.prevPreview = prevPreview;
+
+
+        /**
+         * Calcula y renderiza una sección de armonía específica. (Mantenida)
+         */
+        function renderHarmonySection(title, description, colors, borderColorClass, renderContent) {
+            const section = document.createElement('section');
+            section.className = `bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 border-t-4 ${borderColorClass}`;
+            
+            const titleColorClass = harmonyExplanations[title].color; 
+
+            section.innerHTML = `
+                <div class="flex items-center justify-between mb-2 border-b pb-2">
+                    <h2 class="text-2xl font-bold ${titleColorClass}">${title}</h2>
+                    <button 
+                        class="text-gray-400 hover:text-gray-600 transition duration-150 p-1 rounded-full bg-gray-100 hover:bg-gray-200" 
+                        aria-label="Más información sobre la armonía ${title}"
+                        onclick="showInfoModal('${title}')"
+                    >
+                        <!-- Icono de información SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mb-4 h-10">${description}</p>
+                <div class="flex justify-center flex-wrap gap-2" id="content-${title.replace(/\s/g, '-')}">
+                    <!-- Swatches will be inserted here -->
+                </div>
+            `;
+            
+            const contentDiv = section.querySelector(`#content-${title.replace(/\s/g, '-')}`);
+            renderContent(contentDiv, colors);
+
+            return section;
+        }
+
+
+        /**
+         * Función principal que maneja el cambio de color y la actualización de la UI.
+         */
+        function updateColor(newColor) {
+            // 1. Limpiar y validar el color
+            const sanitizedColor = newColor.trim().toUpperCase();
+            const tc = tinycolor(sanitizedColor);
+            
+            const valid = tc.isValid() && (sanitizedColor.startsWith('#') || sanitizedColor.length === 6); 
+            isValid = valid;
+            currentBaseColor = valid ? tc.toHexString() : sanitizedColor;
+            
+            if (colorTextInput.value !== sanitizedColor) {
+                 colorTextInput.value = sanitizedColor;
+            }
+            if (valid && colorPicker.value !== tc.toHexString()) {
+                 colorPicker.value = tc.toHexString();
+            }
+
+            // 2. Renderizar sección Base
+            renderBaseColorSection();
+
+            if (!valid) {
+                harmoniesContainer.innerHTML = '';
+                shadeScaleContainer.innerHTML = ''; 
+                document.getElementById('ui-preview-content').innerHTML = '';
+                return;
+            }
+
+            const baseColor = tc;
+
+            // 3. Renderizar Escala de Tonalidades (Necesario antes de la UI Preview)
+            renderShadeScale(baseColor);
+            
+            // 4. Renderizar Armonías
+            harmoniesContainer.innerHTML = '';
+            
+            const harmonies = {
+                complementary: baseColor.complement().toHexString(),
+                triadic: baseColor.triad().map(t => t.toHexString()),
+                analogous: baseColor.analogous().map(a => a.toHexString()),
+                tetradic: baseColor.tetrad().map(t => t.toHexString()),
+                monochromatic: baseColor.monochromatic().map(t => t.toHexString()),
+                splitComplementary: baseColor.splitcomplement().map(t => t.toHexString()),
+            };
+            
+            // MONOCROMÁTICA
+            harmoniesContainer.appendChild(renderHarmonySection(
+                'Monocromática',
+                'Tonalidades y sombras de un solo color (variaciones de Luminosidad).',
+                harmonies.monochromatic,
+                'border-indigo-500', 
+                (div, colors) => {
+                    // CORRECCIÓN: El color base debe ser el primero (índice 0) para ser consistente.
+                    colors.forEach((color, index) => {
+                        div.appendChild(createSwatch(color, index === 0 ? "Base" : ''));
+                    });
+                }
+            ));
+            
+            // COMPLEMENTARIA (El índice 0 ya era el base, no necesita cambio)
+            harmoniesContainer.appendChild(renderHarmonySection(
+                'Complementaria',
+                'Máximo contraste, 1 color opuesto.',
+                [baseColor.toHexString(), harmonies.complementary],
+                'border-purple-500',
+                (div, [baseHex, contrastHex]) => {
+                    div.className = "flex justify-center items-end";
+                    div.appendChild(createSwatch(baseHex, 'Base'));
+                    const arrow = document.createElement('span');
+                    arrow.className = 'text-4xl mx-3 font-extrabold text-gray-300';
+                    arrow.textContent = '↔';
+                    div.appendChild(arrow);
+                    div.appendChild(createSwatch(contrastHex, 'Contraste'));
+                }
+            ));
+
+            // TRIÁDICA (El índice 0 ya era el base, no necesita cambio)
+            harmoniesContainer.appendChild(renderHarmonySection(
+                'Triádica',
+                'Balanceada y vibrante, 3 colores (120°).',
+                harmonies.triadic,
+                'border-green-500',
+                (div, colors) => {
+                    colors.forEach((color, index) => {
+                        div.appendChild(createSwatch(color, index === 0 ? "Base" : `Tono ${index}`));
+                    });
+                }
+            ));
+
+            // ANÁLOGA
+            harmoniesContainer.appendChild(renderHarmonySection(
+                'Análoga',
+                'Armoniosa y confortable, 5 colores cercanos.',
+                harmonies.analogous,
+                'border-orange-500',
+                (div, colors) => {
+                    // CORRECCIÓN: El color base debe ser el primero (índice 0) para ser consistente.
+                    colors.forEach((color, index) => {
+                        div.appendChild(createSwatch(color, index === 0 ? "Base" : ''));
+                    });
+                }
+            ));
+
+            // TÉTRADA (El índice 0 ya era el base, no necesita cambio)
+            harmoniesContainer.appendChild(renderHarmonySection(
+                'Tétrada',
+                'Rica y compleja, 4 colores.',
+                harmonies.tetradic,
+                'border-red-500',
+                (div, colors) => {
+                    colors.forEach((color, index) => {
+                        div.appendChild(createSwatch(color, index === 0 ? "Base" : ''));
+                    });
+                }
+            ));
+            
+            // SPLIT COMPLEMENTARIA (El índice 0 ya era el base, no necesita cambio)
+            harmoniesContainer.appendChild(renderHarmonySection(
+                'Split Complementaria',
+                'Contraste moderado, usando los vecinos del color complementario.',
+                harmonies.splitComplementary,
+                'border-teal-500',
+                (div, colors) => {
+                    colors.forEach((color, index) => {
+                        div.appendChild(createSwatch(color, index === 0 ? "Base" : ''));
+                    });
+                }
+            ));
+
+            // 5. Renderizar Previsualización de UI (Carrusel)
+            renderUiPreview(baseColor);
+        }
+
+        // Exponer la función al scope global para el onchange/oninput
+        window.handleColorChange = (newColor) => {
+            updateColor(newColor);
+        };
+
+        // Inicializar la aplicación al cargar la página.
+        window.onload = function() {
+            document.getElementById('copy-notification').classList.add('hidden');
+            updateColor(DEFAULT_COLOR);
+        };
+    </script>
+</body>
+</html>

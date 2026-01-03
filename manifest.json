@@ -1,0 +1,15 @@
+{
+  "name": "Laboratorio de Color",
+  "short_name": "ColorLab",
+  "start_url": "colores.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4A90E2",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3596/3596165.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
